@@ -2,6 +2,7 @@
 
 use std::net::TcpListener;
 mod connection;
+mod consts;
 
 
 fn main() {
@@ -10,7 +11,6 @@ fn main() {
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
-
         connection::handle_connection(stream);
     }
 }
