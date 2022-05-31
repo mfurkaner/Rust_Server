@@ -3,6 +3,12 @@ use std::io::Read;
 use std::io::Write;
 use std::net::TcpStream;
 
+const INDEX_HTML_PATH: &str = "html/index.html";
+const INDEX_STATUS_CODE: &str = "HTTP/1.1 200 OK";
+
+const INVALID_HTML_PATH: &str = "html/404.html";
+const INVALID_STATUS_CODE: &str = "HTTP/1.1 404 NOT FOUND";
+
 pub fn handle_connection(mut stream: TcpStream){
     let mut buffer = [0; 1024];
 
@@ -19,10 +25,10 @@ pub fn handle_connection(mut stream: TcpStream){
 fn validate_request(buffer: [u8;1024], expected: &[u8; 16]) -> (&str, &str){
     if buffer.starts_with(expected) {
         println!("VALID REQUEST!");
-        return ("HTTP/1.1 200 OK", "index.html");
+        return (INDEX_STATUS_CODE, INDEX_HTML_PATH);
     };
     println!("Invalid request!");
-    return ("HTTP/1.1 404 NOT FOUND", "404.html");
+    return (INVALID_STATUS_CODE, INVALID_HTML_PATH);
 }
 
 fn post_html_file(html_path: &str, status_code: &str, mut stream: TcpStream){
