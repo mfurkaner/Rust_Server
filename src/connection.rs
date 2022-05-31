@@ -10,8 +10,7 @@ pub fn handle_connection(mut stream: TcpStream){
 
     stream.read(&mut buffer).unwrap();
 
-    println!("Request is received : ");
-    println!("{}", String::from_utf8_lossy(&buffer[..]));
+    println!("A request is received from {}", stream.peer_addr().unwrap());
 
     let (status_code, html_path) = validate_request(buffer, html::EXPECTED_BASIC_REQUEST);
 
@@ -20,7 +19,7 @@ pub fn handle_connection(mut stream: TcpStream){
 
 fn validate_request(buffer: [u8;1024], expected: &[u8; 16]) -> (&str, &str){
     if buffer.starts_with(expected) {
-        println!("VALID REQUEST!");
+        println!("Valid request!");
         return (html::INDEX_STATUS_CODE, html::INDEX_HTML_PATH);
     };
     println!("Invalid request!");

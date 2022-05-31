@@ -2,6 +2,7 @@
 
     // HTML constants
 pub mod html{
+
     pub const EXPECTED_BASIC_REQUEST: &[u8; 16] = b"GET / HTTP/1.1\r\n";
 
     pub const INDEX_HTML_PATH: &str = "html/index.html";
