@@ -27,12 +27,15 @@ impl ConnectionHandler {
     
         println!("A request is received from {}", streamInfo.0.peer_addr().unwrap());
     
-        let (status_code, html_path) = htmlhandle::validate_request(buffer, html::EXPECTED_BASIC_REQUEST);
+        let (mut status_code, mut html_path) = htmlhandle::validate_request(buffer, html::EXPECTED_BASIC_REQUEST);
     
         if status_code == html::POST_HTML_CODE{
             let request_content = htmlhandle::handle_post_request(streamInfoBurrows);
             let credentials = Self::get_credentials(request_content);
-            Self::check_credentials(self, credentials);
+            if Self::check_credentials(self, credentials) { 
+                html_path = html::INDEX_HTML_PATH; 
+                status_code = html::INDEX_STATUS_CODE;
+            }
         };
     
         htmlhandle::post_html_file(html_path, status_code, streamInfoBurrows);
@@ -49,7 +52,7 @@ impl ConnectionHandler {
         };
     }
 
-    fn check_credentials(&mut self, credentials: Credentials){
+    fn check_credentials(&mut self, credentials: Credentials) -> bool {
         for i in 0..self.validIDs.len(){
             if credentials.conn_id != self.validIDs[i].as_str() {
                 if i == self.validIDs.len() - 1 {println!("Unknown connection id : {} valid ids are : {:?}",credentials.conn_id, self.validIDs)};
@@ -66,6 +69,7 @@ impl ConnectionHandler {
             if expected_id_hash == credentials.hashid_sec{
                 if expected_pw_hash == credentials.hashpw_sec {
                     println!("Welcome back!");
+                    return true;
                 }else{
                     println!("Did you forget your password?");
                 };
@@ -73,7 +77,7 @@ impl ConnectionHandler {
                 println!("Wrong credentials.");
             }
             self.validIDs.remove(i);
-            break;
         }
+        return false;
     }
 }

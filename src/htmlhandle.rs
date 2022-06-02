@@ -34,8 +34,13 @@ pub fn post_html_file(html_path: &str, status_code: &str, streamInfo: (&TcpStrea
     let mut stream = streamInfo.0;
     let body = fs::read_to_string(html_path).unwrap();
 
-    let secret_set = format!("secret = 0x{};",streamInfo.1);
-    let response = construct_html_response_with_insert(status_code, &body, &secret_set, "</script>");
+    let response : String;
+    if html_path == html::LOGIN_HTML_PATH {
+        let secret_set = format!("secret = 0x{};",streamInfo.1);
+        response = construct_html_response_with_insert(status_code, &body, &secret_set, "</script>");
+    }else{
+        response = construct_html_response(status_code, &body);
+    };
 
     stream.write(response.as_bytes()).unwrap();
     stream.flush().unwrap();
