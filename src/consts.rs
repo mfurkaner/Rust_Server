@@ -16,7 +16,7 @@ pub mod html{
 
 
 pub mod hash{
-    pub const FIRST:u64 = 37;
-    pub const A:u64 = 54059;
-    pub const B:u64 = 76963;
+    pub const FIRST:u32 = 37;
+    pub const A:u32 = 54059;
+    pub const B:u32 = 76963;
 }

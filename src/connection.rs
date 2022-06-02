@@ -5,7 +5,7 @@ use std::net::TcpStream;
 
 use crate::consts::html;
 
-pub fn handle_connection(streamInfo: (TcpStream, u64)){
+pub fn handle_connection(streamInfo: (TcpStream, u32)){
     let mut buffer = [0; 1024];
 
     let mut stream = streamInfo.0;

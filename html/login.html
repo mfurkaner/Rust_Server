@@ -38,19 +38,27 @@
     <script type="text/javascript">
         function sendIDPass(){
             const data = {
-                id : document.getElementById("Username").value
-                //pw : string(hash(document.getElementById("pw").value))
+                id : document.getElementById("Username").value,
+                pw : document.getElementById("pw").value,
+                hashid : hash_str(document.getElementById("Username").value)
             }
-            const digest = shajs('sha256').update(data).digest('hex');
 
             let xhr = new XMLHttpRequest();
             xhr.open("POST", "127.0.0.1:7878");
             xhr.setRequestHeader("Content-Type", "application/javascript");
-            xhr.send(shajs('sha256').update(document.getElementById("Username").value).digest('hex'));
+            xhr.send(JSON.stringify(data));
         }
 
         function hash_str(str){
-            let hash = 0;
+            let hash = 37;
+
+            str.split('').forEach(a => {
+                hash = (hash * 54059) ^ (a * 76963);
+                hash %= 0xFFFFFFFF;
+                console.log(hash);
+            });
+            
+            return hash;
         }
     </script>
  
