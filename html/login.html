@@ -35,12 +35,15 @@
  
     <br>
 
+
     <script type="text/javascript">
+        var secret = 123;
         function sendIDPass(){
+            console.log("secret is ", secret.toString(16));
             const data = {
-                id : document.getElementById("Username").value,
-                pw : document.getElementById("pw").value,
-                hashid : hash_str(document.getElementById("Username").value)
+                conn_id : secret.toString(16),
+                hashid_sec : hash_str(hash_str(document.getElementById("Username").value) + secret.toString(16) ),
+                hashpw_sec : hash_str(hash_str(document.getElementById("pw").value) + secret.toString(16) )
             }
 
             let xhr = new XMLHttpRequest();
@@ -53,19 +56,36 @@
             let hash = 37;
 
             str.split('').forEach(a => {
-                hash = (hash * 54059) ^ (a * 76963);
-                hash %= 0xFFFFFFFF;
-                console.log(hash);
+                hash = mulmod(hash, 54059, 0xFFFF) ^ mulmod(a.charCodeAt(), 76963, 0xFFFF);
             });
             
-            return hash;
+            return (hash * hash).toString(16);
+        }
+
+        function mulmod(a, b, mod){
+            let res = 0; //Initialize result
+            a = a % mod;
+            while (b > 0){
+                // If b is odd, add 'a' to result
+                if (b % 2 == 1){
+                    res = (res + a) % mod;
+                    b -= 1;
+                }
+        
+                // Multiply 'a' with 2
+                a = (a * 2) % mod;
+        
+                // Divide b by 2
+                b /= 2;
+            }
+            // Return result
+            return res % mod;
         }
     </script>
- 
+
     <button onclick="sendIDPass()">
         Submit
     </button>
 
 </body>
- 
 </html>
