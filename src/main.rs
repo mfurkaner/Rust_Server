@@ -14,7 +14,9 @@ fn main() {
     println!("Server is configured. Listening on : {}", consts::connection::PUBLIC_IP_ADDR);
 
     let mut conn_handle = connection::ConnectionHandler{
-        validIDs : Vec::new()
+        IDs_toremove : Vec::new(),
+        validIDs : Vec::new(),
+        authIDs : Vec::new()
     };
 
     listener.accept().unwrap();
@@ -25,13 +27,14 @@ fn main() {
         let random = format!("{:x}",rand::random::<u32>());
         println!("A new connection is made. Connection id : {}", random);
         
-        if conn_handle.validIDs.len() == consts::connection::MAX_ALLOWED_CONNECTIONS {
-            conn_handle.validIDs.remove(0);
-        };
         conn_handle.validIDs.push(random.to_owned());
 
         let streamInfo = (stream, random);
 
         conn_handle.handle_connection(streamInfo);
+
+        println!("Connection ended. \nValid ids : {:?}\nAuth ids : {:?}", conn_handle.validIDs, conn_handle.authIDs);
+
+        println!("\n\n");
     }
 }

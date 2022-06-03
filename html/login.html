@@ -38,19 +38,42 @@
 
     <script type="text/javascript">
         var secret = 123;
+
         function sendIDPass(){
-            console.log("secret is ", secret.toString(16));
+            const id = document.getElementById("Username").value;
+            const pass = document.getElementById("pw").value
+
+            const hash_id = hash_str(id);
+            const hash_pass = hash_str(pass);
+
             const data = {
                 conn_id : secret.toString(16),
-                hashid_sec : hash_str(hash_str(document.getElementById("Username").value) + secret.toString(16) ),
-                hashpw_sec : hash_str(hash_str(document.getElementById("pw").value) + secret.toString(16) )
+                hashid_sec : hash_str(hash_str(id) + secret.toString(16)),
+                hashpw_sec : hash_str(hash_str(pass) + secret.toString(16))
             }
 
-            let xhr = new XMLHttpRequest();
-            
-            xhr.open("POST", "127.0.0.1:7878");
-            xhr.setRequestHeader("Content-Type", "application/javascript");
-            xhr.send(JSON.stringify(data));
+            fetch("/login", {
+                method : "POST",
+                headers : {"Content-Length" : JSON.stringify(data).length},
+                body   : JSON.stringify(data)
+            }).then( 
+                response => response.text()
+            ).then(
+                contents => {
+                    if (contents === "FAIL") {
+                        window.alert("Check the credentials.");
+                        window.location.reload();
+                    }
+                    else{
+                        secret = parseInt(contents, 16);
+                        console.log("secret is now " + secret.toString(16))
+                        window.location.pathname = "/" + secret.toString(16) + "/" + hash_str(hash_id + hash_pass + secret.toString(16));
+                    }
+                }
+            ).catch(
+                error => console.log(error)
+            );
+
         }
 
         function hash_str(str){

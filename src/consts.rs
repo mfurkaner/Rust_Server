@@ -5,17 +5,19 @@
     // HTML constants
 pub mod html{
 
-    pub const EXPECTED_BASIC_REQUEST: &[u8; 16] = b"GET / HTTP/1.1\r\n";
+    pub const GET_HTML_CODE: &str = "GET";
 
     pub const INDEX_HTML_PATH: &str = "html/index.html";
-    pub const INDEX_STATUS_CODE: &str = "HTTP/1.1 200 OK";
 
     pub const POST_HTML_CODE: &str = "POST";
 
     pub const LOGIN_HTML_PATH: &str = "html/login.html";
         
     pub const INVALID_HTML_PATH: &str = "html/404.html";
-    pub const INVALID_STATUS_CODE: &str = "HTTP/1.1 404 NOT FOUND";
+    pub const OK_STATUS_CODE: &str = "HTTP/1.0 200 OK";
+    pub const OK_HTML_PATH: &str = "html/OK.html";
+
+    pub const INVALID_STATUS_CODE: &str = "HTTP/1.0 404 NOT FOUND";
 
     pub const ID_HASH: &str = "74b2f64";
     pub const PW_HASH: &str = "c6a240";

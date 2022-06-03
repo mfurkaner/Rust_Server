@@ -7,6 +7,7 @@ pub fn map_from_json(json_serial: String) -> HashMap::<String, String>{
     let pairs = iter.split(',');
     for pair in pairs{
         let mut a = pair.split(':');
+        if a.clone().count() < 2 { continue};
         let first = a.next().unwrap();
         let last = a.next_back().unwrap();
 
