@@ -24,7 +24,8 @@ pub mod html{
 
 pub mod connection{
 
-    pub const IP_ADDR: &str = "127.0.0.1:7878";
+    pub const LOCAL_IP_ADDR: &str   = "192.168.1.35:7878";
+    pub const PUBLIC_IP_ADDR: &str  = "212.156.207.204:7878";
 
     pub const MAX_ALLOWED_CONNECTIONS: usize = 5;
 

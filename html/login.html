@@ -47,6 +47,7 @@
             }
 
             let xhr = new XMLHttpRequest();
+            
             xhr.open("POST", "127.0.0.1:7878");
             xhr.setRequestHeader("Content-Type", "application/javascript");
             xhr.send(JSON.stringify(data));

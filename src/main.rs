@@ -10,8 +10,8 @@ mod htmlhandle;
 mod jsonhandler;
 
 fn main() {
-    let listener = TcpListener::bind(consts::connection::IP_ADDR).unwrap();
-    println!("Server is configured. Listening on : {}", consts::connection::IP_ADDR);
+    let listener = TcpListener::bind(consts::connection::LOCAL_IP_ADDR).unwrap();
+    println!("Server is configured. Listening on : {}", consts::connection::PUBLIC_IP_ADDR);
 
     let mut conn_handle = connection::ConnectionHandler{
         validIDs : Vec::new()
