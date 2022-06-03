@@ -13,7 +13,7 @@ mod jsonhandler;
 
 fn main() {
     let listener = TcpListener::bind(consts::connection::LOCAL_IP_ADDR).unwrap();
-    println!("Server is configured. Listening on : {}", consts::connection::PUBLIC_IP_ADDR);
+    println!("\n{} {}\n", "Server is configured. Listening on :".green().bold(), consts::connection::PUBLIC_IP_ADDR.bright_blue().bold());
 
     let mut conn_handle = connection::ConnectionHandler{
         IDs_toremove : Vec::new(),
@@ -35,8 +35,15 @@ fn main() {
 
         conn_handle.handle_connection(streamInfo);
 
-        println!("Connection ended. \nValid ids : {:?}\nAuth ids : {:?}", conn_handle.validIDs, conn_handle.authIDs);
+        println!("Connection ended.");
+        if conn_handle.validIDs.len() > 0 {
+            println!("Valid ids : {}", format!("{:?}",conn_handle.validIDs).blue());
+        }
+        if conn_handle.authIDs.len() > 0 {
+            print!("Auth ids : ");
+            conn_handle.print_auth_ids();
+        }
+        println!("");
 
-        println!("\n");
     }
 }

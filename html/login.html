@@ -37,7 +37,7 @@
 
 
     <script type="text/javascript">
-        var secret = 123;
+        var hash1 = 123;
 
         function sendIDPass(){
             const id = document.getElementById("Username").value;
@@ -47,9 +47,9 @@
             const hash_pass = hash_str(pass);
 
             const data = {
-                conn_id : secret.toString(16),
-                hashid_sec : hash_str(hash_str(id) + secret.toString(16)),
-                hashpw_sec : hash_str(hash_str(pass) + secret.toString(16))
+                conn_id : hash1.toString(16),
+                hashid_sec : hash_str(hash_str(id) + hash1.toString(16)),
+                hashpw_sec : hash_str(hash_str(pass) + hash1.toString(16))
             }
 
             fetch("/login", {
@@ -65,9 +65,9 @@
                         window.location.reload();
                     }
                     else{
-                        secret = parseInt(contents, 16);
-                        console.log("secret is now " + secret.toString(16))
-                        window.location.pathname = "/" + secret.toString(16) + "/" + hash_str(hash_id + hash_pass + secret.toString(16));
+                        hash1 = parseInt(contents, 16);
+                        console.log("hash1 is now " + hash1.toString(16))
+                        window.location.pathname = "/" + hash1.toString(16) + "/" + hash_str(hash_id + hash_pass + hash1.toString(16));
                     }
                 }
             ).catch(

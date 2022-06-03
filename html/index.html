@@ -7,12 +7,22 @@
     <body>
         <h1>Welcome!</h1>
         <ol>
-            <form action="" method="post">
-                <button name="buton1" value="cam_but">Tunahan'in götüne koy</button>
-            </form>
-            <form action="" method="post">
-                <button name="buton2" value="sen_but">Furkan'ın götüne koy</button>
-            </form>
+            <button onclick="tun_clicked()" name="tun">Ödrek</button>
+            <button onclick="fur_clicked()" name="fur">Köpek</button>
         </ol>
+
+        <script>
+            var hash1 = 123;
+            var hash2 = 123;
+
+            function tun_clicked(){
+                window.location.pathname = "/" + hash1.toString(16) + "/" + hash2.toString(16) + "/ordek";
+            }
+
+            function fur_clicked(){
+                window.location.pathname = "/" + hash1.toString(16) + "/" + hash2.toString(16) + "/kopek";
+            }
+
+        </script>
     </body>
 </html>

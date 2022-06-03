@@ -25,6 +25,7 @@ pub struct ConnectionHandler{
 }
 
 
+
 impl ConnectionHandler {
     pub fn handle_connection(&mut self, mut streamInfo: (TcpStream, String)){
         self.cleanup_auth_ids();
@@ -43,7 +44,12 @@ impl ConnectionHandler {
             htmlhandle::RequestType::INVALID => htmlhandle::construct_invalid_request_object(&requestInfo),
         };
 
-        let auth = self.check_authentication(&request);
+        let auth = self.check_authentication(&request) || self.check_credentials(&request);
+        
+        if auth{
+            self.authIDs.push( (streamInfoBurrows.1.to_owned(), Instant::now()));
+            println!("{}", "The user has auth privileges.".bold().yellow());
+        }
 
         match request.info._type {
             htmlhandle::RequestType::GET     => self.handle_get_request(streamInfoBurrows, &mut request, auth),
@@ -73,13 +79,10 @@ impl ConnectionHandler {
     fn handle_post_request(&mut self, streamInfo: (&TcpStream, &String), request: &mut htmlhandle::Request, mut _auth: bool){
 
         // if the requester is auth or , give auth priv to the new id
-        if self.check_authentication(request) || self.check_credentials(request){
-            self.authIDs.push((streamInfo.1.to_string(), Instant::now()));
-            _auth = true;
+        if _auth{
             self.send_response(streamInfo.1.to_string(), streamInfo);
         }else{
             self.send_response("FAIL".to_string(), streamInfo);
-            _auth = false;
         };
 
         htmlhandle::handle_post_request(request, _auth);
@@ -132,7 +135,7 @@ impl ConnectionHandler {
 
         for i in 0..self.validIDs.len(){
             if credentials.conn_id != self.validIDs[i].as_str() {
-                if i == self.validIDs.len() - 1 {println!("Unknown connection id : {} valid ids are : {:?} where i : {} and vec(i) : {}",credentials.conn_id, self.validIDs, i, self.validIDs[i])};
+                if i == self.validIDs.len() - 1 {println!("Unknown connection id : {} valid ids are : {:?}",credentials.conn_id, self.validIDs)};
                 continue;
             };
             let expected_id = html::ID_HASH;
@@ -142,15 +145,24 @@ impl ConnectionHandler {
 
             if expected_id_hash == credentials.hashid_sec{
                 if expected_pw_hash == credentials.hashpw_sec {
-                    println!("{}", "Login success!".green());
+                    println!("{}", "Login success!".green().bold());
                     return true;
                 }else{
-                    println!("{}","User entered incorrect password.".red());
+                    println!("{}","User entered incorrect password.".red().bold());
                 };
             }else{
-                println!("{}","User entered incorrect credentials.".red());
+                println!("{}","User entered incorrect credentials.".red().bold());
             }
             return false;
+        }
+        return false;
+    }
+
+    fn is_auth(&self, str : &str)->bool{
+        for a in self.authIDs.to_owned(){
+            if a.0 == str{
+                return true;
+            }
         }
         return false;
     }
@@ -159,29 +171,55 @@ impl ConnectionHandler {
         let mut i: usize = 0;
         while i < self.authIDs.len(){
             if  self.authIDs[i].1.elapsed() > Duration::new(180, 0){
-                println!("authID {} lost the auth privilage.", self.authIDs[i].0);
+                println!("{} {}",format!("{}",self.authIDs[i].0).yellow().bold(),"lost the auth privilage due to timeout.".red());
                 self.authIDs.remove(i);
-                i -= 1;
+            }else{
+                i += 1;
             }
-            i += 1;
         }
     }
 
     fn cleanup_valid_ids(&mut self){
-
+        // ensure we are not closing auth connections to get new connections
         if self.validIDs.len() == connection::MAX_ALLOWED_CONNECTIONS {
-            self.validIDs.remove(0);
-        };
-        'outer: for i in 0..self.validIDs.len(){
-            for j in 0.. self.IDs_toremove.len() {
-                if self.validIDs[i] == self.IDs_toremove[j]{
+            for i in 0..self.validIDs.len(){
+                if !self.is_auth(&self.validIDs[i] ){
                     self.validIDs.remove(i);
-                    self.IDs_toremove.remove(j);
-                    break 'outer;
+                    break;
+                }
+            }
+        };
+
+        // remove the dead connections
+        while !self.IDs_toremove.is_empty() {
+            for i in 0.. self.validIDs.len() {
+                if self.validIDs[i] == self.IDs_toremove.last().unwrap().to_owned(){
+                    self.validIDs.remove(i);
+                    break;
                 }
             } 
+
+            for i in 0.. self.authIDs.len(){
+                if self.authIDs[i].0 == self.IDs_toremove.last().unwrap().to_owned(){
+                    self.authIDs.remove(i);
+                    break;
+                }
+            }
+
+            self.IDs_toremove.pop();
         }
     }
 
+    pub fn print_auth_ids(&self){
+        print!("[");
+        for a in 0..self.authIDs.len(){
+            let rem = Duration::new(180, 0).as_secs().saturating_sub(self.authIDs[a].1.elapsed().as_secs()) ;
+            print!("{}{}{}{}{}{}","{".blue(), "\"", format!("{}", self.authIDs[a].0 ).yellow(),  "\", remaining : ", format!("{}s",rem).red(), "}".blue() );
+            if a + 1 != self.authIDs.len(){
+                print!("{}"," , ".blue());
+            }
+        } 
+        print!("]\n");
+    }
 
 }

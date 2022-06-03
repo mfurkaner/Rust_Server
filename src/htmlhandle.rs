@@ -4,8 +4,9 @@ use std::io::Write;
 use std::net::TcpStream;
 
 use crate::consts::html;
+use crate::hash;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum RequestType {
     GET,
     POST,
@@ -130,12 +131,15 @@ pub fn handle_get_request(request: &mut Request, auth: bool){
     request.info.html_path = if request.info.command == "/" {
         html::LOGIN_HTML_PATH.to_string()
     }else if request.info.command.starts_with("/") && auth{
-        html::INDEX_HTML_PATH.to_string()
+        if request.info.command.split("/").count() < 4 {
+            html::INDEX_HTML_PATH.to_string()
+        }else{
+            "html/".to_string() + request.info.command.split("/").last().unwrap() + ".html"
+        }
     }else{
         html::INVALID_HTML_PATH.to_string()
     };
-
-
+    println!("Html path is set to :: {}", request.info.html_path);
 }
 
 pub fn handle_post_request(request: &Request, _auth: bool){
@@ -151,11 +155,19 @@ pub fn handle_invalid_request(_request: &Request){
 
 pub fn post_html_file(request:&Request, streamInfo: (&TcpStream, &String)){
     let mut stream = streamInfo.0;
-    let body = fs::read_to_string(&request.info.html_path).unwrap();
+    let body = match fs::read_to_string(&request.info.html_path){
+        Ok(a) => a,
+        Err(_) => String::new(),
+    };
 
     let response : String;
+
     if request.info.html_path == html::LOGIN_HTML_PATH {
-        let secret_set = format!("secret = 0x{};",streamInfo.1);
+        let secret_set = format!("hash1 = 0x{};",streamInfo.1);
+        response = construct_html_response_with_insert(&request.info.status_code, &body, &secret_set, "</script>");
+    }else if request.info._type == RequestType::GET{
+        let _hash = hash::hash_str(html::ID_HASH.to_owned() + html::PW_HASH + streamInfo.1);
+        let secret_set = format!("hash1 = 0x{};hash2 = 0x{:x};",streamInfo.1, _hash);
         response = construct_html_response_with_insert(&request.info.status_code, &body, &secret_set, "</script>");
     }else{
         response = construct_html_response(&request.info.status_code, &body);
