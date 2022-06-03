@@ -1,6 +1,8 @@
 use std::io::Read;
-use std::io::Write;
 use std::net::TcpStream;
+use std::time;
+use std::time::{Duration, Instant};
+use colored::*;
 
 use crate::consts::html;
 use crate::consts::connection;
@@ -18,20 +20,20 @@ struct Credentials{
 
 pub struct ConnectionHandler{
     pub validIDs: Vec<String>,
-    pub authIDs: Vec<String>,
+    pub authIDs: Vec<(String, time::Instant)>,
     pub IDs_toremove: Vec<String>
 }
 
 
 impl ConnectionHandler {
     pub fn handle_connection(&mut self, mut streamInfo: (TcpStream, String)){
+        self.cleanup_auth_ids();
+
         let mut buffer = [0; 1024];
     
         streamInfo.0.read(&mut buffer).unwrap();
         
         let streamInfoBurrows = (&streamInfo.0, &streamInfo.1);
-    
-        println!("A request is received from {}", streamInfo.0.peer_addr().unwrap());
 
         let requestInfo = htmlhandle::validate_request(buffer);
 
@@ -41,7 +43,6 @@ impl ConnectionHandler {
             htmlhandle::RequestType::INVALID => htmlhandle::construct_invalid_request_object(&requestInfo),
         };
 
-        let mut i = 0;
         let auth = self.check_authentication(&request);
 
         match request.info._type {
@@ -49,7 +50,9 @@ impl ConnectionHandler {
             htmlhandle::RequestType::POST    => self.handle_post_request(streamInfoBurrows, &mut request, auth),
             htmlhandle::RequestType::INVALID => self.handle_invalid_request(streamInfoBurrows, &mut request)
         };
-        
+
+        request.content = request.content.trim_matches('\0').to_string();
+
         if request.content.len() > 0 {
             println!("Content : {}", request.content);
         }
@@ -62,26 +65,24 @@ impl ConnectionHandler {
         htmlhandle::post_html_response(response, streamInfo);
     }
 
-    fn handle_get_request(&mut self, streamInfo: (&TcpStream, &String), request: &mut htmlhandle::Request, mut auth: bool){
+    fn handle_get_request(&mut self, streamInfo: (&TcpStream, &String), request: &mut htmlhandle::Request, auth: bool){
         htmlhandle::handle_get_request(request, auth);
         htmlhandle::post_html_file(&request, streamInfo);
     }
 
-    fn handle_post_request(&mut self, streamInfo: (&TcpStream, &String), request: &mut htmlhandle::Request, mut auth: bool){
+    fn handle_post_request(&mut self, streamInfo: (&TcpStream, &String), request: &mut htmlhandle::Request, mut _auth: bool){
 
-        let credentials = self.get_credentials(request.content.clone());
-        self.IDs_toremove.push(credentials.conn_id.to_string());
-
-        if self.check_credentials(credentials.to_owned()){
-            self.authIDs.push(streamInfo.1.to_string());
-            auth = true;
+        // if the requester is auth or , give auth priv to the new id
+        if self.check_authentication(request) || self.check_credentials(request){
+            self.authIDs.push((streamInfo.1.to_string(), Instant::now()));
+            _auth = true;
             self.send_response(streamInfo.1.to_string(), streamInfo);
         }else{
             self.send_response("FAIL".to_string(), streamInfo);
-            auth = false;
+            _auth = false;
         };
 
-        htmlhandle::handle_post_request(request, auth);
+        htmlhandle::handle_post_request(request, _auth);
     }
 
     fn handle_invalid_request(&mut self, streamInfo: (&TcpStream, &String), request: &mut htmlhandle::Request){
@@ -94,9 +95,9 @@ impl ConnectionHandler {
         let map = jsonhandler::map_from_json(post_request_content);
         
         return Credentials{
-            conn_id     : map.get("conn_id").unwrap().to_string(), 
-            hashid_sec  : map.get("hashid_sec").unwrap().to_string(), 
-            hashpw_sec  : map.get("hashpw_sec").unwrap().to_string() 
+            conn_id     : if map.is_empty() {"0".to_string()} else {map.get("conn_id").unwrap().to_string()},  
+            hashid_sec  : if map.is_empty() {"0".to_string()} else {map.get("hashid_sec").unwrap().to_string()}, 
+            hashpw_sec  : if map.is_empty() {"0".to_string()} else {map.get("hashpw_sec").unwrap().to_string()}, 
         };
     }
 
@@ -110,13 +111,14 @@ impl ConnectionHandler {
             if i >= self.authIDs.len() || command_split.len() < 2{ 
                 break false
             ;}
-            
-            if self.authIDs[i] == command_split[0]{
 
-                let expected_hash = hash::hash_str(html::ID_HASH.to_owned() + &html::PW_HASH.to_owned() + &self.authIDs[i].to_owned());
+            if self.authIDs[i].0 == command_split[0]{
+
+                let expected_hash = hash::hash_str(html::ID_HASH.to_owned() + &html::PW_HASH.to_owned() + &self.authIDs[i].0.to_owned());
                 let expected_hash = format!("{:x}",expected_hash);
 
                 if  expected_hash == command_split[1] {
+                    self.authIDs.remove(i);
                     break true;
                 }
             }
@@ -124,35 +126,49 @@ impl ConnectionHandler {
         };
     }
 
-    fn check_credentials(&mut self, credentials: Credentials) -> bool {
+    fn check_credentials(&mut self, request: &Request) -> bool {
+        let credentials = self.get_credentials(request.content.clone());
+        self.IDs_toremove.push(credentials.conn_id.to_string());
+
         for i in 0..self.validIDs.len(){
             if credentials.conn_id != self.validIDs[i].as_str() {
-                if i == self.validIDs.len() - 1 {println!("Unknown connection id : {} valid ids are : {:?}",credentials.conn_id, self.validIDs)};
+                if i == self.validIDs.len() - 1 {println!("Unknown connection id : {} valid ids are : {:?} where i : {} and vec(i) : {}",credentials.conn_id, self.validIDs, i, self.validIDs[i])};
                 continue;
             };
-            let expected_id = format!("{:x}", hash::hash_str("ali".to_string()));
-            let expected_pw = format!("{:x}", hash::hash_str("atabak".to_string()));
-            let expected_id_hash = format!("{:x}",hash::hash_str( expected_id + &credentials.conn_id ) );
-            let expected_pw_hash = format!("{:x}",hash::hash_str( expected_pw + &credentials.conn_id ) );
-
-            println!("expected id: {} - got: {}",expected_id_hash, credentials.hashid_sec);
-            println!("expected pw: {} - got: {}",expected_pw_hash, credentials.hashpw_sec);
+            let expected_id = html::ID_HASH;
+            let expected_pw = html::PW_HASH;
+            let expected_id_hash = format!("{:x}",hash::hash_str( expected_id.to_owned() + &credentials.conn_id ) );
+            let expected_pw_hash = format!("{:x}",hash::hash_str( expected_pw.to_owned() + &credentials.conn_id ) );
 
             if expected_id_hash == credentials.hashid_sec{
                 if expected_pw_hash == credentials.hashpw_sec {
-                    println!("Welcome back!");
+                    println!("{}", "Login success!".green());
                     return true;
                 }else{
-                    println!("Did you forget your password?");
+                    println!("{}","User entered incorrect password.".red());
                 };
             }else{
-                println!("Wrong credentials.");
+                println!("{}","User entered incorrect credentials.".red());
             }
+            return false;
         }
         return false;
     }
 
+    fn cleanup_auth_ids(&mut self){
+        let mut i: usize = 0;
+        while i < self.authIDs.len(){
+            if  self.authIDs[i].1.elapsed() > Duration::new(180, 0){
+                println!("authID {} lost the auth privilage.", self.authIDs[i].0);
+                self.authIDs.remove(i);
+                i -= 1;
+            }
+            i += 1;
+        }
+    }
+
     fn cleanup_valid_ids(&mut self){
+
         if self.validIDs.len() == connection::MAX_ALLOWED_CONNECTIONS {
             self.validIDs.remove(0);
         };

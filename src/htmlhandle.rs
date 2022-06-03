@@ -138,7 +138,7 @@ pub fn handle_get_request(request: &mut Request, auth: bool){
 
 }
 
-pub fn handle_post_request(request: &Request, auth: bool){
+pub fn handle_post_request(request: &Request, _auth: bool){
     if request.info.command == "/login" {
         //implement login
     }else{
@@ -146,7 +146,7 @@ pub fn handle_post_request(request: &Request, auth: bool){
     };
 }
 
-pub fn handle_invalid_request(request: &Request){
+pub fn handle_invalid_request(_request: &Request){
 }
 
 pub fn post_html_file(request:&Request, streamInfo: (&TcpStream, &String)){

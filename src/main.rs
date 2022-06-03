@@ -2,6 +2,8 @@
 
 use std::net::TcpListener;
 
+use colored::Colorize;
+
 
 mod connection;
 mod consts;
@@ -25,7 +27,7 @@ fn main() {
         let stream = stream.unwrap();
 
         let random = format!("{:x}",rand::random::<u32>());
-        println!("A new connection is made. Connection id : {}", random);
+        println!("{} {} {} {}","A request is received. Connection id :".green(), random.blue(), "Public IP :".green() , stream.peer_addr().expect("Peer IP get failed.").to_string().yellow());
         
         conn_handle.validIDs.push(random.to_owned());
 
@@ -35,6 +37,6 @@ fn main() {
 
         println!("Connection ended. \nValid ids : {:?}\nAuth ids : {:?}", conn_handle.validIDs, conn_handle.authIDs);
 
-        println!("\n\n");
+        println!("\n");
     }
 }
