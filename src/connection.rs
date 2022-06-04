@@ -121,6 +121,7 @@ impl ConnectionHandler {
                 let expected_hash = format!("{:x}",expected_hash);
 
                 if  expected_hash == command_split[1] {
+                    self.IDs_toremove.push(command_split[0].to_string());
                     self.authIDs.remove(i);
                     break true;
                 }
@@ -190,21 +191,22 @@ impl ConnectionHandler {
                 }
             }
         };
-
+        
         // remove the dead connections
         while !self.IDs_toremove.is_empty() {
-            for i in 0.. self.validIDs.len() {
+
+            'inner1: for i in 0.. self.validIDs.len() {
                 if self.validIDs[i] == self.IDs_toremove.last().unwrap().to_owned(){
                     self.validIDs.remove(i);
-                    break;
+                    break 'inner1;
                 }
             } 
 
-            for i in 0.. self.authIDs.len(){
+            'inner2: for i in 0.. self.authIDs.len(){
                 if self.authIDs[i].0 == self.IDs_toremove.last().unwrap().to_owned(){
                     println!("{} {}", format!("{}",self.authIDs[i].0).yellow().bold() , "successfully logged off.".green().bold());
                     self.authIDs.remove(i);
-                    break;
+                    break 'inner2;
                 }
             }
 
