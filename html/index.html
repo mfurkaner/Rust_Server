@@ -5,11 +5,12 @@
         <title>HELLO</title>
     </head>
     <body>
-        <h1>Welcome!</h1>
+        <h1>Tebrikler giriş başarılı!</h1>
         <ol>
             <button onclick="tun_clicked()" name="tun">Ödrek</button>
             <button onclick="fur_clicked()" name="fur">Köpek</button>
         </ol>
+        <button onclick="logout()">Cikis</button>
 
         <script>
             var hash1 = 123;
@@ -21,6 +22,10 @@
 
             function fur_clicked(){
                 window.location.pathname = "/" + hash1.toString(16) + "/" + hash2.toString(16) + "/kopek";
+            }
+
+            function logout(){
+                window.location.pathname = "/" + hash1.toString(16) + "/logout"; 
             }
 
         </script>

@@ -27,7 +27,7 @@ fn main() {
         let stream = stream.unwrap();
 
         let random = format!("{:x}",rand::random::<u32>());
-        println!("{} {} {} {}","A request is received. Connection id :".green(), random.blue(), "Public IP :".green() , stream.peer_addr().expect("Peer IP get failed.").to_string().yellow());
+        println!("{} {} {} {}\n","A request is received. Connection id :".green(), random.blue().bold(), "Public IP :".green() , stream.peer_addr().expect("Peer IP get failed.").to_string().yellow());
         
         conn_handle.validIDs.push(random.to_owned());
 
@@ -35,7 +35,6 @@ fn main() {
 
         conn_handle.handle_connection(streamInfo);
 
-        println!("Connection ended.");
         if conn_handle.validIDs.len() > 0 {
             println!("Valid ids : {}", format!("{:?}",conn_handle.validIDs).blue());
         }
@@ -43,7 +42,7 @@ fn main() {
             print!("Auth ids : ");
             conn_handle.print_auth_ids();
         }
-        println!("");
+        println!("{}","-----------------------------------------------------------------------------------".bold());
 
     }
 }

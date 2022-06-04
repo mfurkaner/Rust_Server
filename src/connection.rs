@@ -12,7 +12,7 @@ use crate::jsonhandler;
 use crate::hash;
 
 #[derive(Clone, PartialEq)]
-struct Credentials{
+pub struct Credentials{
     pub conn_id: String,
     pub hashid_sec: String,
     pub hashpw_sec: String
@@ -25,58 +25,50 @@ pub struct ConnectionHandler{
 }
 
 
-
 impl ConnectionHandler {
     pub fn handle_connection(&mut self, mut streamInfo: (TcpStream, String)){
+        // check for auth timeouts
         self.cleanup_auth_ids();
-
+        // read from stream
         let mut buffer = [0; 1024];
-    
         streamInfo.0.read(&mut buffer).unwrap();
-        
+        // burrow the stream tuple
         let streamInfoBurrows = (&streamInfo.0, &streamInfo.1);
-
-        let requestInfo = htmlhandle::validate_request(buffer);
-
-        let mut request = match requestInfo._type {
-            htmlhandle::RequestType::POST    => htmlhandle::construct_post_request_object(&buffer, &requestInfo),
-            htmlhandle::RequestType::GET     => htmlhandle::construct_get_request_object(&buffer, &requestInfo),
-            htmlhandle::RequestType::INVALID => htmlhandle::construct_invalid_request_object(&requestInfo),
-        };
-
-        let auth = self.check_authentication(&request) || self.check_credentials(&request);
-        
-        if auth{
-            self.authIDs.push( (streamInfoBurrows.1.to_owned(), Instant::now()));
-            println!("{}", "The user has auth privileges.".bold().yellow());
-        }
-
-        match request.info._type {
-            htmlhandle::RequestType::GET     => self.handle_get_request(streamInfoBurrows, &mut request, auth),
-            htmlhandle::RequestType::POST    => self.handle_post_request(streamInfoBurrows, &mut request, auth),
-            htmlhandle::RequestType::INVALID => self.handle_invalid_request(streamInfoBurrows, &mut request)
-        };
-
-        request.content = request.content.trim_matches('\0').to_string();
-
-        if request.content.len() > 0 {
-            println!("Content : {}", request.content);
-        }
-
+        // parse the request
+        let mut request = htmlhandle::construct_request_object(&buffer);
+        // chec the authentication
+        let auth = self.authenticate(&request, streamInfoBurrows.1.to_owned());
+        // handle the request
+        self.handle_request(streamInfoBurrows, &mut request, auth);
+        // clean up the valid id vector
         self.cleanup_valid_ids();
-
     }
 
     fn send_response(&mut self, response: String, streamInfo: (&TcpStream, &String)){
         htmlhandle::post_html_response(response, streamInfo);
     }
 
+    fn handle_request(&mut self, streamInfo: (&TcpStream, &String), request: &mut htmlhandle::Request, auth: bool){
+        match request.info._type {
+            htmlhandle::RequestType::GET     => self.handle_get_request(streamInfo, request, auth),
+            htmlhandle::RequestType::POST    => self.handle_post_request(streamInfo, auth),
+            htmlhandle::RequestType::INVALID => self.handle_invalid_request(streamInfo, request)
+        };
+
+        request.content = request.content.trim_matches('\0').to_string();
+    }
+
     fn handle_get_request(&mut self, streamInfo: (&TcpStream, &String), request: &mut htmlhandle::Request, auth: bool){
-        htmlhandle::handle_get_request(request, auth);
+        let action = htmlhandle::handle_get_request(request, auth);
+        
+        if action == htmlhandle::HtmlGetAction::Logout{
+            self.IDs_toremove.push(request.info.credentials.conn_id.to_string());
+        }
+
         htmlhandle::post_html_file(&request, streamInfo);
     }
 
-    fn handle_post_request(&mut self, streamInfo: (&TcpStream, &String), request: &mut htmlhandle::Request, mut _auth: bool){
+    fn handle_post_request(&mut self, streamInfo: (&TcpStream, &String), mut _auth: bool){
 
         // if the requester is auth or , give auth priv to the new id
         if _auth{
@@ -84,12 +76,10 @@ impl ConnectionHandler {
         }else{
             self.send_response("FAIL".to_string(), streamInfo);
         };
-
-        htmlhandle::handle_post_request(request, _auth);
     }
 
     fn handle_invalid_request(&mut self, streamInfo: (&TcpStream, &String), request: &mut htmlhandle::Request){
-        htmlhandle::handle_invalid_request(request);
+        //htmlhandle::handle_invalid_request(request);
         htmlhandle::post_html_file(&request, streamInfo);
     }
 
@@ -102,6 +92,16 @@ impl ConnectionHandler {
             hashid_sec  : if map.is_empty() {"0".to_string()} else {map.get("hashid_sec").unwrap().to_string()}, 
             hashpw_sec  : if map.is_empty() {"0".to_string()} else {map.get("hashpw_sec").unwrap().to_string()}, 
         };
+    }
+
+    fn authenticate(&mut self, request: &Request, currentStreamID : String) -> bool {
+        let auth = self.check_authentication(&request) || self.check_credentials(&request);
+        
+        if auth{
+            self.authIDs.push( (currentStreamID, Instant::now()));
+            println!("{}", "The user has auth privileges.".bold().yellow());
+        }
+        return auth;
     }
 
     fn check_authentication(&mut self, request: &Request) -> bool {
@@ -131,11 +131,12 @@ impl ConnectionHandler {
 
     fn check_credentials(&mut self, request: &Request) -> bool {
         let credentials = self.get_credentials(request.content.clone());
+
         self.IDs_toremove.push(credentials.conn_id.to_string());
 
         for i in 0..self.validIDs.len(){
             if credentials.conn_id != self.validIDs[i].as_str() {
-                if i == self.validIDs.len() - 1 {println!("Unknown connection id : {} valid ids are : {:?}",credentials.conn_id, self.validIDs)};
+                if i == self.validIDs.len() - 1 {println!("{}{}","Unknown client id : ".bright_red(), credentials.conn_id.blue().bold())};
                 continue;
             };
             let expected_id = html::ID_HASH;
@@ -201,6 +202,7 @@ impl ConnectionHandler {
 
             for i in 0.. self.authIDs.len(){
                 if self.authIDs[i].0 == self.IDs_toremove.last().unwrap().to_owned(){
+                    println!("{} {}", format!("{}",self.authIDs[i].0).yellow().bold() , "successfully logged off.".green().bold());
                     self.authIDs.remove(i);
                     break;
                 }

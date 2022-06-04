@@ -7,33 +7,36 @@
 </head>
  
 <body>
-    <h1>Welcome!</h1>
+    <div style="background-color:rgb(217, 94, 63);color:rgb(0, 0, 0);padding:20px;width: 800px;margin: 0 auto;">
+        <div style="width: 60%; margin: 0px auto;">
+            <h1 style="padding-left: 25%;">Merhabalar!</h1>
  
-    <h2>Login to the best server available</h2>
+            <h2 style="padding-left: 10%;">Dunya'nin en iyi serverina hos geldiniz.</h2>
+        </div>
+
  
-    <form action=""
-          method="post"
-          id="users">
- 
-        <label for="username">
-          Username:
-      </label>
-        <input type="text"
-               name="username"
-               id="Username">
- 
+    <ol>
+        <form style="padding-left: 30%;font-weight: bold;">     
+            <label for="username">
+            isim
+            </label>
+            <input type="text"
+                name="username"
+                id="Username">
+            <br>
+            <br>
+            <label for="password">
+            sifre
+            </label>
+            <input type="password"
+                name="password"
+                id="pw">
+        </form>
         <br>
-        <br>
- 
-        <label for="password">
-          Password:
-      </label>
-        <input type="password"
-               name="password"
-               id="pw">
-    </form>
- 
-    <br>
+        <button onclick="sendIDPass()" style="margin-left: 40%;font-weight: bold;">
+            Login
+        </button>
+    </ol>
 
 
     <script type="text/javascript">
@@ -61,7 +64,7 @@
             ).then(
                 contents => {
                     if (contents === "FAIL") {
-                        window.alert("Check the credentials.");
+                        window.alert("Yanlis kullanici adi/sifre.");
                         window.location.reload();
                     }
                     else{
@@ -106,10 +109,6 @@
             return res % mod;
         }
     </script>
-
-    <button onclick="sendIDPass()">
-        Submit
-    </button>
-
+</div>
 </body>
 </html>

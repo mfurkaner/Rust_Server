@@ -4,9 +4,19 @@
 
         <img src="https://scontent.fsaw2-2.fna.fbcdn.net/v/t1.6435-9/180978949_314228950059549_1005358403722529104_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=09cbfe&_nc_ohc=wMkShDTSbyAAX-mZGJV&_nc_ht=scontent.fsaw2-2.fna&oh=00_AT9P_HURAH2w2PyVacTXpvxtIZW7JMj8hA-D3fa1y2Kx5w&oe=62BF9B0E" 
         alt="Lmao wtf" />
-        
+        <button onclick="back_to_index()">
+            Geri</button>
+    
         <script>
+            var hash1 = 123;
+            var hash2 = 123;
+
+            function back_to_index(){
+                window.location.pathname = "/" + hash1.toString(16) + "/" + hash2.toString(16);
+            }
+    
         </script>
+    
 
     </body>
 

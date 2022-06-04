@@ -5,7 +5,17 @@
         <img src="https://media.moddb.com/images/members/5/4550/4549205/duck.jpg" 
         alt="wutt" />
 
+        <button onclick="back_to_index()">
+        Geri</button>
+
         <script>
+            var hash1 = 123;
+            var hash2 = 123;
+
+            function back_to_index(){
+                window.location.pathname = "/" + hash1.toString(16) + "/" + hash2.toString(16);
+            }
+
         </script>
 
     </body>
