@@ -92,6 +92,7 @@ impl ConnectionHandler {
             let new_buffer = [0; 1024];
             streamInfo.0.read(buffer).unwrap();
             request.content = htmlhandle::get_content(&new_buffer);
+            println!("New content after the second read : {}", request.content);
         }
 
         request
