@@ -35,7 +35,7 @@ impl ConnectionHandler {
         // burrow the stream tuple
         let streamInfoBurrows = (&streamInfo.0, &streamInfo.1);
         // parse the request
-        let mut request = htmlhandle::construct_request_object(&buffer);
+        let mut request = self.construct_request_object(&mut buffer, streamInfoBurrows);
         // chec the authentication
         let auth = self.authenticate(&request, streamInfoBurrows.1.to_owned());
         // handle the request
@@ -81,6 +81,20 @@ impl ConnectionHandler {
     fn handle_invalid_request(&mut self, streamInfo: (&TcpStream, &String), request: &mut htmlhandle::Request){
         //htmlhandle::handle_invalid_request(request);
         htmlhandle::post_html_file(&request, streamInfo);
+    }
+
+    fn construct_request_object(&mut self, buffer: &mut [u8; 1024], mut streamInfo: (&TcpStream, &String) ) -> htmlhandle::Request{
+        let mut request  = htmlhandle::construct_request_object(&buffer);
+
+        if   request.info._type == htmlhandle::RequestType::POST &&
+            !request.content.chars().any( |x| x.is_alphanumeric() )
+        {
+            let new_buffer = [0; 1024];
+            streamInfo.0.read(buffer).unwrap();
+            request.content = htmlhandle::get_content(&new_buffer);
+        }
+
+        request
     }
 
     fn get_credentials(&self, post_request_content: String) -> Credentials {

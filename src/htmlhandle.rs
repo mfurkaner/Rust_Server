@@ -193,13 +193,17 @@ fn get_content_len(request: &[u8;1024]) -> usize{
     return result;
 }
 
-fn get_content(request: &[u8;1024]) -> String{
+pub fn get_content(request: &[u8;1024]) -> String{
 
     let content_length = get_content_len(request);
 
     let req_str = String::from_utf8_lossy(&request[..]).to_string();
 
-    let content = req_str.split_inclusive("\r\n\r\n").nth(1).unwrap();
+    let content = req_str.split_inclusive("\r\n\r\n").nth(  
+        match req_str.find("\r\n\r\n") {
+            Some(_) => 1,
+            None => 0,
+        }).unwrap();
     if content.len() >= content_length{
         return content.to_string();
     }
@@ -231,7 +235,7 @@ fn construct_post_request_object(request: &[u8;1024], req_info: &RequestInfo) ->
         content : if get_content(request).chars().any(|x| x.is_alphanumeric()) {
             get_content(request)
         } else {
-            println!("{}", String::from_utf8_lossy(&request[..]));
+            println!("{}","No content found in the initial request read!".red().dimmed());
             get_content(request)
         }
     };
