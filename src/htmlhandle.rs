@@ -228,10 +228,10 @@ fn construct_post_request_object(request: &[u8;1024], req_info: &RequestInfo) ->
             _type: req_info._type,
             credentials : req_info.credentials.clone()
         },
-        content : if get_content(request).is_empty() {
-            println!("{}", String::from_utf8_lossy(&request[..]));
+        content : if get_content(request).chars().any(|x| x.is_alphanumeric()) {
             get_content(request)
         } else {
+            println!("{}", String::from_utf8_lossy(&request[..]));
             get_content(request)
         }
     };
