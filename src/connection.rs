@@ -86,7 +86,7 @@ impl ConnectionHandler {
     fn get_credentials(&self, post_request_content: String) -> Credentials {
         
         let map = jsonhandler::map_from_json(post_request_content);
-        
+
         return Credentials{
             conn_id     : if map.is_empty() {"0".to_string()} else {map.get("conn_id").unwrap().to_string()},  
             hashid_sec  : if map.is_empty() {"0".to_string()} else {map.get("hashid_sec").unwrap().to_string()}, 
@@ -191,7 +191,7 @@ impl ConnectionHandler {
                 }
             }
         };
-        
+
         // remove the dead connections
         while !self.IDs_toremove.is_empty() {
 
