@@ -85,7 +85,7 @@ impl ConnectionHandler {
 
     fn construct_request_object(&mut self, buffer: &mut [u8; 1024], mut streamInfo: (&TcpStream, &String) ) -> htmlhandle::Request{
         let mut request  = htmlhandle::construct_request_object(&buffer);
-
+        // TODO: #1 implement a better no post content handler
         if   request.info._type == htmlhandle::RequestType::POST &&
             !request.content.chars().any( |x| x.is_alphanumeric() )
         {
