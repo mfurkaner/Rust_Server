@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>
+        Rust-Server
+    </title>
+</head>
+ 
+<body>
+    <div style="background-color:rgb(217, 94, 63);color:rgb(0, 0, 0);padding:20px;width: 800px;margin: 0 auto;">
+        <div style="width: 60%; margin: 0px auto;">
+            <h1 style="padding-left: 25%;">Merhabalar!</h1>
+ 
+            <h2 style="padding-left: 10%;">Dunya'nin en iyi serverina hos geldiniz.</h2>
+        </div>
+
+ 
+    <ol>
+        <form style="padding-left: 30%;font-weight: bold;">     
+            <label for="username">
+            isim
+            </label>
+            <input type="text"
+                name="username"
+                id="Username">
+            <br>
+            <br>
+            <label for="password">
+            sifre
+            </label>
+            <input type="password"
+                name="password"
+                id="pw">
+        </form>
+        <br>
+        <button onclick="sendIDPass()" style="margin-left: 40%;font-weight: bold;">
+            Login
+        </button>
+    </ol>
+
+
+    <script type="text/javascript">
+        var hash1 = 123;
+
+        function sendIDPass(){
+            const id = document.getElementById("Username").value;
+            const pass = document.getElementById("pw").value
+
+            const hash_id = hash_str(id);
+            const hash_pass = hash_str(pass);
+
+            const data = {
+                conn_id : hash1.toString(16),
+                hashid_sec : hash_str(hash_str(id) + hash1.toString(16)),
+                hashpw_sec : hash_str(hash_str(pass) + hash1.toString(16))
+            }
+
+            fetch("/login", {
+                method : "POST",
+                headers : {"Content-Length" : JSON.stringify(data).length},
+                body   : JSON.stringify(data)
+            }).then( 
+                response => response.text()
+            ).then(
+                contents => {
+                    if (contents === "FAIL") {
+                        window.alert("Yanlis kullanici adi/sifre.");
+                        window.location.reload();
+                    }
+                    else{
+                        hash1 = parseInt(contents, 16);
+                        console.log("hash1 is now " + hash1.toString(16))
+                        window.location.pathname = "/" + hash1.toString(16) + "/" + hash_str(hash_id + hash_pass + hash1.toString(16));
+                    }
+                }
+            ).catch(
+                error => console.log(error)
+            );
+
+        }
+
+        function hash_str(str){
+            let hash = 37;
+
+            str.split('').forEach(a => {
+                hash = mulmod(hash, 54059, 0xFFFF) ^ mulmod(a.charCodeAt(), 76963, 0xFFFF);
+            });
+            
+            return (hash * hash).toString(16);
+        }
+
+        function mulmod(a, b, mod){
+            let res = 0; //Initialize result
+            a = a % mod;
+            while (b > 0){
+                // If b is odd, add 'a' to result
+                if (b % 2 == 1){
+                    res = (res + a) % mod;
+                    b -= 1;
+                }
+        
+                // Multiply 'a' with 2
+                a = (a * 2) % mod;
+        
+                // Divide b by 2
+                b /= 2;
+            }
+            // Return result
+            return res % mod;
+        }
+    </script>
+</div>
+</body>
+</html>

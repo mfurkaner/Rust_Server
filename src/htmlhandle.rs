@@ -19,6 +19,7 @@ pub enum RequestType {
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum HtmlGetAction{
+    Favicon,
     LoginPage,
     Logout,
     Index,
@@ -94,6 +95,7 @@ pub fn construct_request_object(request: &[u8;1024]) -> Request{
 pub fn handle_get_request(request: &mut Request, auth: bool) -> HtmlGetAction{
     let action = get_http_action_from_command(request);
     request.info.html_path = match action {
+        HtmlGetAction::Favicon => html::FAVICON_PATH.to_string(),
         HtmlGetAction::InvalidPage => html::INVALID_HTML_PATH.to_string(),
         HtmlGetAction::LoginPage => html::LOGIN_HTML_PATH.to_string(),
         HtmlGetAction::Logout => html::LOGIN_HTML_PATH.to_string(),
@@ -152,7 +154,12 @@ fn get_http_action_from_command(request: &mut Request) -> HtmlGetAction{
     let split = get_command.split("/");
     if get_command == "/" {
         result = HtmlGetAction::LoginPage;
-    }else if get_command.starts_with("/") {
+    }else if get_command == "/favicon.ico"{
+        result = HtmlGetAction::Favicon;
+    }
+    
+    
+    else if get_command.starts_with("/") {
         if split.to_owned().count() >= 4 {
             result = HtmlGetAction::SubPage;
         }else if split.to_owned().count() == 3 && split.to_owned().last().unwrap() == "logout" {

@@ -16,6 +16,7 @@ pub mod html{
     pub const INVALID_HTML_PATH: &str = "html/404.html";
     pub const OK_STATUS_CODE: &str = "HTTP/1.0 200 OK";
     pub const OK_HTML_PATH: &str = "html/OK.html";
+    pub const FAVICON_PATH: &str = "html/favicon.ico";
 
     pub const INVALID_STATUS_CODE: &str = "HTTP/1.0 404 NOT FOUND";
 
@@ -26,7 +27,7 @@ pub mod html{
 
 pub mod connection{
 
-    pub const LOCAL_IP_ADDR: &str   = "192.168.1.35:7878";
+    pub const LOCAL_IP_ADDR: &str   = "127.0.0.1:7878";
     pub const PUBLIC_IP_ADDR: &str  = "212.156.207.204:7878";
 
     pub const MAX_ALLOWED_CONNECTIONS: usize = 5;

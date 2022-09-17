@@ -36,7 +36,7 @@ impl ConnectionHandler {
         let streamInfoBurrows = (&streamInfo.0, &streamInfo.1);
         // parse the request
         let mut request = self.construct_request_object(&mut buffer, streamInfoBurrows);
-        // chec the authentication
+        // check the authentication
         let auth = self.authenticate(&request, streamInfoBurrows.1.to_owned());
         // handle the request
         self.handle_request(streamInfoBurrows, &mut request, auth);
